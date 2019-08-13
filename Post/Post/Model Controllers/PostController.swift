@@ -3,7 +3,7 @@
 //  Post
 //
 //  Created by Apps on 8/12/19.
-//  Copyright © 2019 Apps. All rights reserved.
+//  Copyright © 2019 Cameron Stuart. All rights reserved.
 //
 
 import Foundation
@@ -29,7 +29,7 @@ class PostController {
                 completion()
                 return
             }
-        
+            
             guard let data = data else { completion(); return }
             
             let decoder = JSONDecoder()
@@ -46,6 +46,47 @@ class PostController {
                 return
             }
         })
+        dataTask.resume()
+    }
+    
+    func addNewPostWith(username: String, text: String, completion: @escaping (Bool) -> Void) {
+        // initialize post
+        let post = Post(text: text, username: username)  // I am not sure that I properly understand this basic initialization - like what is it doing?
+        
+        guard let unwrappedBaseURL = baseURL else { return }
+        let postEndpoint = unwrappedBaseURL.appendingPathExtension("json")
+        var postData: Data?
+        
+        do {
+            let encoder = JSONEncoder()
+            postData = try encoder.encode(post)
+        } catch let error {
+            print("Error encoding data. \(error)")
+        }
+        
+        var request = URLRequest(url: postEndpoint)
+        request.httpMethod = "POST"
+        // this sends the data with the request
+        request.httpBody = postData
+        
+        let dataTask = URLSession.shared.dataTask(with: request) { (data, response, error) in
+            if let error = error {
+                print("Error sending data to firebase - \(error) - \(error.localizedDescription)")
+                completion(false)
+                return
+            }
+            
+            guard let data = data else { return }
+            
+            if let dataString = String(data: data, encoding: .utf8) {
+                print(dataString)
+            }
+            
+            self.posts.append(post)
+            self.fetchPosts(completion: {
+                completion(true) // Need more clarity on how completions work.
+            })
+        }
         dataTask.resume()
     }
 }

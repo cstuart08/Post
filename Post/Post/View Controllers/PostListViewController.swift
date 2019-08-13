@@ -29,6 +29,11 @@ class PostListViewController: UIViewController, UITableViewDelegate, UITableView
         }
     }
     
+    @IBAction func addNewPostButton(_ sender: Any) {
+        newPost()
+    }
+    
+    
     @objc func refreshControlPulled(){
         UIApplication.shared.isNetworkActivityIndicatorVisible = true
         postController.fetchPosts {
@@ -59,5 +64,37 @@ class PostListViewController: UIViewController, UITableViewDelegate, UITableView
         cell.detailTextLabel?.text = "(\(post.username) | \(Date(timeIntervalSince1970: post.timestamp))"
         
         return cell
+    }
+    
+    func newPost() {
+        let alert = UIAlertController(title: "New Post", message: "Enter Message:", preferredStyle: .alert)
+        
+        alert.addTextField { (textField: UITextField) in
+            textField.placeholder = "Username:"
+        }
+        
+        alert.addTextField { (textField: UITextField) in
+            textField.placeholder = "Text:"
+        }
+        
+        alert.addAction(UIAlertAction(title: "Post This!", style: .default, handler: { (action) in
+            guard let username = alert.textFields?[0].text,
+                let text = alert.textFields?[1].text,
+            !username.isEmpty,
+            !text.isEmpty else { return }
+            self.postController.addNewPostWith(username: username, text: text, completion: { (success) in
+                if success {
+                    DispatchQueue.main.async {
+                        self.tableView.reloadData()
+                        print("success")
+                    }
+                } else {
+                        print("failed to post")
+                    }
+            })
+        }))
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        self.present(alert, animated: true, completion: nil)
     }
 }
